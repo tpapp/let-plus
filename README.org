@@ -202,7 +202,7 @@ the array syntax above), have a look at =let+-expansion=.
 
 * Reporting bugs
 
-Please open an issue on Github for bugs.  Extensions are also welcome,
+Please open an [[https://github.com/tpapp/let-plus/issues][issue]] on Github for bugs.  Extensions are also welcome,
 either as forks or small code snippets submitted as issues.  Wishlist
 items are also welcome!
 
