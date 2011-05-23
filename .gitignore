@@ -1,5 +1,3 @@
 *.fasl
 *~
 unit-tests/test-results/
-README.html
-
