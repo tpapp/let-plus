@@ -1,9 +1,9 @@
-     Example:
-#+begin_src lisp
+Example:
+#+BEGIN_SRC lisp
 (defclass foo-class ()
   ((a :accessor a :initarg :a)
    (b :accessor b-accessor :initarg :b)))
 
 (let+ (((&slots a (my-b b)) (make-instance 'foo-class :a 1 :b 2)))
   (list a my-b))  ; => (1 2)
- #+end_src
+#+END_SRC
