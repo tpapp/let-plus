@@ -17,12 +17,11 @@ extension of =let*=.
 * Similar libraries
 
 This library was inspired by Gary King's excellent [[http://common-lisp.net/project/metabang-bind/][metabang-bind]].  I
-have been using the latter for years now, pestering Gary with requests
-for extensions from time to time which were always graciously
-accommodated.  At some point I decided to write a library of my own,
-aiming for a cleaner syntax, more conscise implementation and a more
-consistent interface (whether I have succeeded is of course up to
-judgement --- try [[http://common-lisp.net/project/metabang-bind/][metabang-bind]] to see if you like it better).
+have been using the latter for years now, but at some point I decided
+to write a library of my own, aiming for a cleaner syntax, more
+concise implementation and a more consistent interface (whether I have
+succeeded is of course a matter of judgement --- try [[http://common-lisp.net/project/metabang-bind/][metabang-bind]] to
+see if you like it better).
 
 In my opinion the main advantages of this library, compared to
 [[http://common-lisp.net/project/metabang-bind/][metabang-bind]], are the placeholder macros which provide editor hints
@@ -61,6 +60,14 @@ ones.  Some forms ignore =NIL= variables (see their documentation).
    The following forms are defined:
 
 - =var=, =(var)=, =(var value)= :: These behave just like they do in =let*=.
+
+- =(list value)= :: When =list= is not recognized as any of the forms
+  below, it is simply destructured using =destructuring-bind=.  =NIL=s
+  are ignored.  Example:
+#+BEGIN_SRC lisp
+(let+ (((a (b &optional (c 3)) nil &key (d 1 d?)) '(1 (2) 7 :d 4)))
+  (list a b c d d?))  ; => (1 2 3 4 T)
+#+END_SRC                    
      
 - =((&slots slot*) value)=, also =&slots-r/o= :: Similarly to
      =with-slots=, each =slot= has the syntax =variable=, =(variable)=
