@@ -7,7 +7,8 @@
   :version "0.1"
   :serial t
   :components ((:file "package")
-               (:file "let-plus"))
+               (:file "let-plus")
+               (:file "extensions"))
   :depends-on (alexandria anaphora))
 
 (asdf:defsystem let-plus-tests
