@@ -49,9 +49,19 @@ option is accepted.  The defaults are &NAME and &NAME-R/O."
     `(progn
        (defstruct ,name-and-options ,@slot-descriptions)
        (define-let+-expansion (,r/w-prefix (,@slot-names))
+         ,(format nil "LET+ form for slots of the structure ~A." name)
          `(let+ (((&structure ,',conc-name ,,@variable-name-pairs) ,value))
             ,@body))
        (define-let+-expansion (,r/o-prefix (,@slot-names))
+         ,(format nil "LET+ form for slots of the structure ~A.  Read-only."
+                  name)
          `(let+ (((&structure-r/o ,',conc-name ,,@variable-name-pairs)
                   ,value))
             ,@body)))))
+
+(define-let+-expansion (&fwrap (name))
+  "Wrap closure in the local function NAME.  Calls to name will call the
+closure"
+  `(let+ (((&flet ,name (&rest arguments)
+             (apply ,value arguments))))
+     ,@body))
