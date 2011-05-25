@@ -143,3 +143,9 @@ should)."
                     ((aa 3) (bb 7))
                     (&ab-r/o aa bb)
                     (&ab aa bb)))
+
+(addtest (let-plus-tests)
+  test-fwrap
+  (let+ (((&fwrap add) (lambda (a b &key (c 0)) (+ a b c))))
+    (ensure-same (add 1 2) 3)
+    (ensure-same (add 1 2 :c 3) 6)))
