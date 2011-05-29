@@ -50,11 +50,13 @@ the second value."
 
 (defun expand-slot-forms (slots accessor-generator)
   "Return a list of expanded bindings, calling (ACCESSOR-GENERATOR KEY)"
-  (mapcar (lambda (entry)
-            (destructuring-bind (variable &optional (key variable))
-                (ensure-list entry)
-              `(,variable ,(funcall accessor-generator key))))
-          slots))
+  (let (bindings)
+    (loop for entry :in slots do
+      (destructuring-bind (variable &optional (key variable))
+          (ensure-list entry)
+        (when variable
+          (push `(,variable ,(funcall accessor-generator key)) bindings))))
+    (nreverse bindings)))
 
 (defun expand-entry-forms (entries accessor-generator)
   "Return a list of expanded bindings from , calling (ACESSOR-GENERATOR KEY
