@@ -2,19 +2,37 @@
 
 (in-package #:let-plus)
 
+(defun destructured-lambda-list-forms (lambda-list body)
+  "Return (list ARGUMENTS BODY), ie the arguments for the lambda list to be
+destructured and the destructing form, wrapping the original body."
+  (let ((arguments (loop repeat (length lambda-list) collect (gensym))))
+    (list arguments
+          `(let+ ,(mapcar #'list lambda-list arguments)
+             ,@body))))
+                      
+(define-let+-expansion (&flet+ (function-name lambda-list
+                                              &body function-body)
+                               :once-only? nil)
+  "&FLET that destructures its arguments using LET+."
+  `(let+ (((&flet ,function-name
+               ,@(destructured-lambda-list-forms lambda-list function-body))))
+     ,@body))
+
+(define-let+-expansion (&labels+ (function-name lambda-list
+                                                &body function-body)
+                               :once-only? nil)
+  "&LABELS that destructures its arguments using LET+."
+  `(let+ (((&labels ,function-name
+               ,@(destructured-lambda-list-forms lambda-list function-body))))
+     ,@body))
+
 (defmacro lambda+ (lambda-list &body body)
   "LAMBDA that destructures its arguments using LET+."
-  (let ((arguments (loop repeat (length lambda-list) collect (gensym))))
-    `(lambda ,arguments
-       (let+ ,(mapcar #'list lambda-list arguments)
-         ,@body))))
+  `(lambda ,@(destructured-lambda-list-forms lambda-list body)))
 
 (defmacro defun+ (name lambda-list &body body)
   "DEFUN that destructures its arguments using LET+."
-  (let ((arguments (loop repeat (length lambda-list) collect (gensym))))
-    `(defun ,name ,arguments
-       (let+ ,(mapcar #'list lambda-list arguments)
-         ,@body))))
+  `(defun ,name ,@(destructured-lambda-list-forms lambda-list body)))
 
 (defmacro defstruct+ (name-and-options &rest slot-descriptions)
   "Define a structure with let+ forms for accessing and reading slots.  Syntax
