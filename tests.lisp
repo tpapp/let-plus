@@ -149,3 +149,18 @@ should)."
   (let+ (((&fwrap add) (lambda (a b &key (c 0)) (+ a b c))))
     (ensure-same (add 1 2) 3)
     (ensure-same (add 1 2 :c 3) 6)))
+
+(addtest (let-plus-tests)
+  test-flet+
+  (ensure-same (let+ (((&flet+ add3 (#(a b c))
+                         (+ a b c))))
+                 (add3 #(1 2 3)))
+               6))
+
+(addtest (let-plus-tests)
+  test-labels+
+  (let+ (((&labels+ foo ((a . b))
+            (if a
+                (foo (cons (cdr a) (cons (car a) b)))
+                b))))
+    (ensure-same (foo '((1 2 3) . nil)) '(3 2 1))))
