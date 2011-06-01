@@ -18,7 +18,7 @@
 
    ;; extensions
    
-   lambda+ defun+ defstruct+ &fwrap
+   &flet+ &labels+ lambda+ defun+ defstruct+ &fwrap
    
    ))
 
