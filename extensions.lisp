@@ -34,49 +34,27 @@ destructured and the destructing form, wrapping the original body."
   "DEFUN that destructures its arguments using LET+."
   `(defun ,name ,@(destructured-lambda-list-forms lambda-list body)))
 
-(defmacro defstruct+ (name-and-options &rest slot-descriptions)
-  "Define a structure with let+ forms for accessing and reading slots.  Syntax
-is the same as that of DEFSTRUCT, except that a (:let+ PREFIX PREFIX-R/O)
-option is accepted.  The defaults are &NAME and &NAME-R/O."
-  ;; implementation note: this macro is very convoluted, most of it comes from
-  ;; accomodating the syntax of defstruct
-  (let+ (((name &rest options) (ensure-list name-and-options))
-         ((&flet find-option (option &optional (options options))
-            (find option options :key #'car)))
-         (conc-name (aif (second 
-                          (find-option :conc-name
-                                       (mapcar #'ensure-list options)))
-                         it
-                         (concat-symbols name '#:-)))
-         (let+-options (awhen (find-option :let+)
-                         (setf options (remove :let+ options
-                                               :key #'car))
-                         it))
-         ((r/w-prefix
-           &optional (r/o-prefix (concat-symbols r/w-prefix '#:-r/o)))
-          (if let+-options
-              (cdr let+-options)
-              (list (concat-symbols '#:& name))))
-         (slot-names (mapcar (compose #'first #'ensure-list)
-                             (if (stringp (first slot-descriptions))
-                                 (cdr slot-descriptions)
-                                 slot-descriptions)))
-         (variable-name-pairs
-          (loop for slot-name in slot-names collect
-                ``(,,slot-name ,',slot-name))))
+(defmacro define-structure-let+ ((name 
+                                  &key (conc-name (symbolicate name #\-))
+                                       (r/w (symbolicate #\& name))
+                                       (r/o (symbolicate #\& name '#:-r/o)))
+                                 &rest slot-names)
+  "Define a LET+ expansion for accessing slots of a structure in a fixed
+order."
+  (let ((variable-name-pairs
+         (loop for slot-name in slot-names collect
+               ``(,,slot-name ,',slot-name))))
     `(progn
-       (defstruct ,name-and-options ,@slot-descriptions)
-       (eval-when (:compile-toplevel :load-toplevel :execute)
-         (define-let+-expansion (,r/w-prefix (,@slot-names))
-           ,(format nil "LET+ form for slots of the structure ~A." name)
-           `(let+ (((&structure ,',conc-name ,,@variable-name-pairs) ,value))
-                  ,@body))
-         (define-let+-expansion (,r/o-prefix (,@slot-names))
-           ,(format nil "LET+ form for slots of the structure ~A.  Read-only."
-                    name)
-           `(let+ (((&structure-r/o ,',conc-name ,,@variable-name-pairs)
-                    ,value))
-                  ,@body))))))
+       (define-let+-expansion (,r/w (,@slot-names))
+         ,(format nil "LET+ form for slots of the structure ~A." name)
+         `(let+ (((&structure ,',conc-name ,,@variable-name-pairs) ,value))
+            ,@body))
+       (define-let+-expansion (,r/o (,@slot-names))
+         ,(format nil "LET+ form for slots of the structure ~A.  Read-only."
+                  name)
+         `(let+ (((&structure-r/o ,',conc-name ,,@variable-name-pairs)
+                  ,value))
+            ,@body)))))
 
 (define-let+-expansion (&fwrap (name))
   "Wrap closure in the local function NAME.  Calls to name will call the

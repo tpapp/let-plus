@@ -133,9 +133,10 @@ should)."
                     (&hash-table a (b :b) (c nil) (d nil 4))))
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
-  (defstruct+ ab
+  (defstruct ab
       "A structure for testing defstruct+."
-    a b))
+    a b)
+  (define-structure-let+ (ab) a b))
 
 (addtest (let-plus-tests)
   test-defstruct+

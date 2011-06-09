@@ -22,14 +22,6 @@ the second value."
                          (awhen (cdr tree) (traverse it))))))
       (values (traverse tree) (nreverse ignored)))))
 
-(defun concat-symbols (&rest symbols)
-  "Concatenate symbols (can also be strings, characters, etc)."
-  (intern (apply #'concatenate 'string
-                 (loop for symbol in symbols collect
-                   (if symbol
-                       (format nil "~A" symbol)
-                       "")))))
-
 ;;; LET+ recognizes three general kinds of syntax for accessing elements in
 ;;; some structure (in the abstract sense):
 ;;; 
@@ -193,7 +185,7 @@ CONC-NAME."
   (check-type conc-name symbol)
   `(symbol-macrolet
        ,(expand-slot-forms slots 
-            (lambda (slot) `(,(concat-symbols conc-name slot) ,value)))
+            (lambda (slot) `(,(symbolicate conc-name slot) ,value)))
      ,@body))
 
 (define-let+-expansion (&structure-r/o (conc-name &rest slots))
@@ -201,7 +193,7 @@ CONC-NAME."
 CONC-NAME.  Read-only version."
   (check-type conc-name symbol)
   `(let ,(expand-slot-forms slots 
-             (lambda (slot) `(,(concat-symbols conc-name slot) ,value)))
+             (lambda (slot) `(,(symbolicate conc-name slot) ,value)))
      ,@body))
 
 (define-let+-expansion (&values values :once-only? nil)
