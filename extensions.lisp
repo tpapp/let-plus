@@ -44,7 +44,7 @@ order."
   (let ((variable-name-pairs
          (loop for slot-name in slot-names collect
                ``(,,slot-name ,',slot-name))))
-    `(progn
+    `(eval-when (:compile-toplevel :load-toplevel :execute)
        (define-let+-expansion (,r/w (,@slot-names))
          ,(format nil "LET+ form for slots of the structure ~A." name)
          `(let+ (((&structure ,',conc-name ,,@variable-name-pairs) ,value))
