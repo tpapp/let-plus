@@ -112,7 +112,9 @@ Most accepted forms start with &."
                  (let+-expansion form value (aif other-bindings
                                                  (list (expand it))
                                                  body))))))
-    (expand bindings)))
+    (if bindings
+        (expand bindings)
+        body)))
 
 
 (defmacro define-let+-expansion ((name arguments &key
@@ -127,12 +129,13 @@ BODY-VAR."
   (let ((arguments-var (gensym "ARGUMENTS"))
         (arguments (if (listp arguments)
                        arguments
-                       `(&rest ,arguments))))
+                       `(&rest ,arguments)))
+        (whole (gensym "WHOLE")))
     (multiple-value-bind (remaining-forms declarations docstring)
         (parse-body body)
       (sunless docstring (setf it "LET+ form."))
       `(progn
-         (defmacro ,name ,arguments
+         (defmacro ,name (&whole ,whole ,@arguments)
            ,docstring
            (declare (ignore ,@(remove-if 
                                (lambda (symbol)
@@ -140,8 +143,7 @@ BODY-VAR."
                                      (find symbol lambda-list-keywords)))
                                (flatten arguments))))
            ,@declarations
-           (error "Placeholder macro for LET+ expansion, not meant to be used
-       directly."))
+           ,whole)
          (defmethod let+-expansion-for-list
              ((first (eql ',name)) ,arguments-var ,value-var ,body-var)
            ,(let ((core `(destructuring-bind ,arguments ,arguments-var
