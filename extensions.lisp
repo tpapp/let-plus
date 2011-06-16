@@ -68,5 +68,5 @@ closure"
   "Expand to (assert test-form arguments) before body."
   (assert (not value) () "&ASSERT forms don't take a value.")
   `(progn
-     (assert ,test-form ,arguments)
+     (assert ,test-form ,@arguments)
      ,@body))
