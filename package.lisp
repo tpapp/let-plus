@@ -18,7 +18,7 @@
 
    ;; extensions
    
-   &flet+ &labels+ lambda+ defun+ define-structure-let+ &fwrap
+   &flet+ &labels+ lambda+ defun+ define-structure-let+ &fwrap &assert
    
    ))
 

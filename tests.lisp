@@ -165,3 +165,15 @@ should)."
                 (foo (cons (cdr a) (cons (car a) b)))
                 b))))
     (ensure-same (foo '((1 2 3) . nil)) '(3 2 1))))
+
+(addtest (let-plus-tests)
+  test-assert
+  (ensure
+    (let+ ((a 1)
+           (b 1)
+           ((&assert (= a b))))
+      t))
+  (ensure-error
+    (let+ ((a 1)
+           (b 2)
+           ((&assert (= a b)))))))
