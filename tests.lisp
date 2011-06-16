@@ -179,9 +179,14 @@ should)."
            ((&assert (= a b)))))))
 
 (addtest (let-plus-tests)
+  test-&warning
   (ensure-warning
     (macroexpand '(let+ ((&foo 1)) &foo)))
   (ensure-warning
     (macroexpand '(let+ ((&foo)) &foo)))
   (ensure-warning
     (macroexpand '(let+ (&foo) &foo))))
+
+(addtest (let-plus-tests)
+  test-empty-let+
+  (ensure-same (let+ nil 1) 1 :test #'eql))
