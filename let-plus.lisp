@@ -117,7 +117,7 @@ Most accepted forms start with &."
                                                  body))))))
     (if bindings
         (expand bindings)
-        body)))
+        `(progn ,@body))))
 
 
 (defmacro define-let+-expansion ((name arguments &key
