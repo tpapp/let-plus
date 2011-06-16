@@ -83,6 +83,9 @@ form (accessor value subscripts)."
   (:method (form value body)
     (error "LET+ could not recognize ~A." form))
   (:method ((variable symbol) value body)
+    (when (char= (aref (symbol-name variable) 0) #\&)
+      (warn "Possibly left out one level of nesting in LET+ form (~A ~A)."
+            variable value))
     (if value
         `(let ((,variable ,value))
            ,@body)

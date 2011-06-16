@@ -177,3 +177,11 @@ should)."
     (let+ ((a 1)
            (b 2)
            ((&assert (= a b)))))))
+
+(addtest (let-plus-tests)
+  (ensure-warning
+    (macroexpand '(let+ ((&foo 1)) &foo)))
+  (ensure-warning
+    (macroexpand '(let+ ((&foo)) &foo)))
+  (ensure-warning
+    (macroexpand '(let+ (&foo) &foo))))
