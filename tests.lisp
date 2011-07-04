@@ -190,3 +190,13 @@ should)."
 (addtest (let-plus-tests)
   test-empty-let+
   (ensure-same (let+ nil 1) 1 :test #'eql))
+
+(addtest (let-plus-tests)
+  test-recursive-let+
+  (ensure-same (let+ ((#((a . b)) (vector (cons 1 2))))
+                 (values a b))
+               (values 1 2))
+  ;; (ensure-same (let+ (((#(a) #(b c)) (cons #(1) #(2 3))))
+  ;;                (values a b c))
+  ;;              (values 1 2 3))
+  )

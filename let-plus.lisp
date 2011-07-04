@@ -170,7 +170,7 @@ BODY-VAR."
 
 (define-let+-expansion (&accessors-r/o slots)
   "LET+ form, similar to WITH-ACCESSORS, but read-only."
-  `(let ,(expand-slot-forms slots (lambda (accessor) `(,accessor ,value)))
+  `(let+ ,(expand-slot-forms slots (lambda (accessor) `(,accessor ,value)))
      ,@body))
 
 (define-let+-expansion (&slots slots :once-only? nil)
@@ -180,8 +180,8 @@ BODY-VAR."
 
 (define-let+-expansion (&slots-r/o slots)
   "LET+ form, similar to WITH-SLOTS but read-only."
-  `(let ,(expand-slot-forms slots
-             (lambda (slot) `(slot-value ,value ',slot)))
+  `(let+ ,(expand-slot-forms slots
+                             (lambda (slot) `(slot-value ,value ',slot)))
      ,@body))
 
 (define-let+-expansion (&structure (conc-name &rest slots))
@@ -197,8 +197,9 @@ CONC-NAME."
   "LET+ form for slots of a structure, with accessors generated using
 CONC-NAME.  Read-only version."
   (check-type conc-name symbol)
-  `(let ,(expand-slot-forms slots 
-             (lambda (slot) `(,(symbolicate conc-name slot) ,value)))
+  `(let+ ,(expand-slot-forms slots 
+                             (lambda (slot)
+                               `(,(symbolicate conc-name slot) ,value)))
      ,@body))
 
 (define-let+-expansion (&values values :once-only? nil)
@@ -219,7 +220,7 @@ CONC-NAME.  Read-only version."
                 bindings))))
     `(progn
        (assert (equal (array-dimensions ,value) ',(array-dimensions array)))
-       (let ,(nreverse bindings)
+       (let+ ,(nreverse bindings)
          ,@body))))
 
 (define-let+-expansion (&array-elements array-elements)
@@ -233,7 +234,7 @@ writing array elements."
   "LET+ form, mapping (variable &rest subscripts) specifications to
 array-elements.  Read-only accessor, values assigned to VARIABLEs."
   (once-only (value)
-    `(let ,(expand-array-elements value array-elements)
+    `(let+ ,(expand-array-elements value array-elements)
        ,@body)))
 
 (define-let+-expansion (&flet (function-name lambda-list
@@ -280,6 +281,6 @@ default)."
 (define-let+-expansion (&hash-table-r/o entries)
   "LET+ form for hash tables.  Each entry is (variable &optional key default).
 Read only version."
-  `(let ,(expand-entry-forms entries
+  `(let+ ,(expand-entry-forms entries
           (lambda (key default) `(gethash ,key ,value ,default)))
      ,@body))
