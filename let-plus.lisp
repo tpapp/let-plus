@@ -119,7 +119,6 @@ Most accepted forms start with &."
         (expand bindings)
         `(progn ,@body))))
 
-
 (defmacro define-let+-expansion ((name arguments &key
                                        (value-var 'value) (body-var 'body)
                                        (once-only? t))
@@ -140,11 +139,15 @@ BODY-VAR."
       `(progn
          (defmacro ,name (&whole ,whole ,@arguments)
            ,docstring
-           (declare (ignore ,@(remove-if 
-                               (lambda (symbol)
-                                 (or (null symbol)
-                                     (find symbol lambda-list-keywords)))
-                               (flatten arguments))))
+           (declare (ignore 
+                     ,@(remove-if (lambda (symbol)
+                                    (or (not symbol)
+                                        (not (symbolp symbol))
+                                        (keywordp symbol)
+                                        (find symbol lambda-list-keywords)
+                                        (eql (aref (symbol-name symbol) 0)
+                                             #\&)))
+                                  (flatten arguments))))
            ,@declarations
            ,whole)
          (defmethod let+-expansion-for-list
@@ -248,10 +251,17 @@ array-elements.  Read-only accessor, values assigned to VARIABLEs."
 (define-let+-expansion (&labels (function-name lambda-list 
                                                &body function-body)
                            :once-only? nil)
-  "LET+ form for function definitions.  Expands into an LABESS, thus allowing
+  "LET+ form for function definitions.  Expands into an LABELS, thus allowing
 recursive functions."
   (assert (not value) () "&LABELS forms don't take a value.")
   `(labels ((,function-name ,lambda-list ,@function-body))
+     ,@body))
+
+(define-let+-expansion (&macrolet (macro-name lambda-list  &body macro-body)
+                        :once-only? nil)
+  "LET+ form for local macro definitions.  Expands into an MACROLET."
+  (assert (not value) () "&MACROLET forms don't take a value.")
+  `(macrolet ((,macro-name ,lambda-list ,@macro-body))
      ,@body))
 
 (define-let+-expansion (&plist entries)

@@ -9,8 +9,8 @@
    let+
    
    &accessors &accessors-r/o &slots &slots-r/o &structure &structure-r/o
-   &values &array-elements &array-elements-r/o &flet &labels &plist &plist-r/o
-   &hash-table &hash-table-r/o
+   &values &array-elements &array-elements-r/o &flet &labels &macrolet
+   &plist &plist-r/o &hash-table &hash-table-r/o
 
    ;; defining new forms
    
