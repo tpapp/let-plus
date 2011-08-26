@@ -120,7 +120,8 @@ Most accepted forms start with &."
         `(progn ,@body))))
 
 (defmacro define-let+-expansion ((name arguments &key
-                                       (value-var 'value) (body-var 'body)
+                                       (value-var 'value)
+                                       (body-var 'body)
                                        (once-only? t))
                                  &body body)
   "Define an expansion for LET+ forms which are lists, starting with NAME.
@@ -150,14 +151,24 @@ BODY-VAR."
                                   (flatten arguments))))
            ,@declarations
            ,whole)
-         (defmethod let+-expansion-for-list
-             ((first (eql ',name)) ,arguments-var ,value-var ,body-var)
+         (defmethod let+-expansion-for-list ((first (eql ',name))
+                                             ,arguments-var ,value-var
+                                             ,body-var)
            ,(let ((core `(destructuring-bind ,arguments ,arguments-var
                            ,@declarations
                            ,@remaining-forms)))
-              (if once-only?
-                  `(once-only (,value-var) ,core)
+              (if once-only? ; basically once-only, with ignorable value
+                  (with-unique-names (value-once-var)
+                    `(let ((,value-once-var (gensym "VALUE")))
+                       `(let ((,,value-once-var ,,value-var))
+                          (declare (ignorable ,,value-once-var))
+                          ,(let ((,value-var ,value-once-var))
+                             ,core))))
                   core)))))))
+
+;; (let+ (((&STRUCTURE-R/O %CLOSE-PATH-) #:OBJECT1030))
+;;   (WRITE-STRING "\\pgfpathclose" STREAM))
+
 
 ;;; Definitions for particular LET+ forms.
 ;;; 
@@ -193,7 +204,8 @@ CONC-NAME."
   (check-type conc-name symbol)
   `(symbol-macrolet
        ,(expand-slot-forms slots 
-            (lambda (slot) `(,(symbolicate conc-name slot) ,value)))
+                           (lambda (slot) `(,(symbolicate conc-name slot)
+                                            ,value)))
      ,@body))
 
 (define-let+-expansion (&structure-r/o (conc-name &rest slots))
@@ -258,7 +270,7 @@ recursive functions."
      ,@body))
 
 (define-let+-expansion (&macrolet (macro-name lambda-list  &body macro-body)
-                        :once-only? nil)
+                           :once-only? nil)
   "LET+ form for local macro definitions.  Expands into an MACROLET."
   (assert (not value) () "&MACROLET forms don't take a value.")
   `(macrolet ((,macro-name ,lambda-list ,@macro-body))
@@ -276,7 +288,7 @@ key default)."
 (define-let+-expansion (&plist-r/o entries)
   "LET+ form for property lists, read only version."
   `(let ,(expand-entry-forms entries
-          (lambda (key default) `(getf ,value ,key ,default)))
+                             (lambda (key default) `(getf ,value ,key ,default)))
      ,@body))
 
 (define-let+-expansion (&hash-table entries)
@@ -284,13 +296,13 @@ key default)."
 default)."
   `(symbol-macrolet 
        ,(expand-entry-forms entries
-                                (lambda (key default)
-                                  `(gethash ,key ,value ,default)))
+                            (lambda (key default)
+                              `(gethash ,key ,value ,default)))
      ,@body))
 
 (define-let+-expansion (&hash-table-r/o entries)
   "LET+ form for hash tables.  Each entry is (variable &optional key default).
 Read only version."
   `(let+ ,(expand-entry-forms entries
-          (lambda (key default) `(gethash ,key ,value ,default)))
+                              (lambda (key default) `(gethash ,key ,value ,default)))
      ,@body))
