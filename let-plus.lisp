@@ -226,15 +226,17 @@ CONC-NAME.  Read-only version."
 
 (defmethod let+-expansion ((array array) value body)
   "LET+ expansion for mapping array elements to variables."
-  (let (bindings)
+  (let (bindings
+        (value-var (gensym "VALUE")))
     (dotimes (row-major-index (array-total-size array))
       (let ((variable (row-major-aref array row-major-index)))
         (unless (ignored? variable)
           (push `(,variable 
-                  (row-major-aref ,value ,row-major-index))
+                  (row-major-aref ,value-var ,row-major-index))
                 bindings))))
-    `(progn
-       (assert (equal (array-dimensions ,value) ',(array-dimensions array)))
+    `(let ((,value-var ,value))
+       (assert (equal (array-dimensions ,value-var)
+                      ',(array-dimensions array)))
        (let+ ,(nreverse bindings)
          ,@body))))
 
