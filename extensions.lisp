@@ -12,7 +12,7 @@ destructured and the destructing form, wrapping the original body."
                       
 (define-let+-expansion (&flet+ (function-name lambda-list
                                               &body function-body)
-                               :once-only? nil)
+                               :uses-value? nil)
   "&FLET that destructures its arguments using LET+."
   `(let+ (((&flet ,function-name
                ,@(destructured-lambda-list-forms lambda-list function-body))))
@@ -20,7 +20,7 @@ destructured and the destructing form, wrapping the original body."
 
 (define-let+-expansion (&labels+ (function-name lambda-list
                                                 &body function-body)
-                               :once-only? nil)
+                               :uses-value? nil)
   "&LABELS that destructures its arguments using LET+."
   `(let+ (((&labels ,function-name
                ,@(destructured-lambda-list-forms lambda-list function-body))))
@@ -64,9 +64,8 @@ closure"
      ,@body))
 
 (define-let+-expansion (&assert (test-form &rest arguments)
-                                :once-only? nil)
+                                :uses-value? nil)
   "Expand to (assert test-form arguments) before body."
-  (assert (not value) () "&ASSERT forms don't take a value.")
   `(progn
      (assert ,test-form ,@arguments)
      ,@body))

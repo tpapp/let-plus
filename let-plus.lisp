@@ -122,13 +122,15 @@ Most accepted forms start with &."
 (defmacro define-let+-expansion ((name arguments &key
                                        (value-var 'value)
                                        (body-var 'body)
-                                       (once-only? t))
+                                       (uses-value? t)
+                                       (once-only? uses-value?))
                                  &body body)
   "Define an expansion for LET+ forms which are lists, starting with NAME.
 ARGUMENTS is destructured if a list.  A placeholder macro is defined with
 NAME, using DOCSTRING and ARGUMENTS.  The value form is bound to
 VALUE-VAR (wrapped in ONCE-ONLY when ONCE-ONLY?), while the body is bound to
-BODY-VAR."
+BODY-VAR.  USES-VALUE? determines is the form uses a value, and generates the
+appropriate checks."
   (let ((arguments-var (gensym "ARGUMENTS"))
         (arguments (if (listp arguments)
                        arguments
@@ -154,6 +156,10 @@ BODY-VAR."
          (defmethod let+-expansion-for-list ((first (eql ',name))
                                              ,arguments-var ,value-var
                                              ,body-var)
+           ,(if uses-value?
+                `(assert ,value-var () "Missing value form in ~A." ',name)
+                `(assert (not ,value-var) ()
+                         "~A forms don't take a value." ',name))
            ,(let ((core `(destructuring-bind ,arguments ,arguments-var
                            ,@declarations
                            ,@remaining-forms)))
@@ -165,10 +171,6 @@ BODY-VAR."
                           ,(let ((,value-var ,value-once-var))
                              ,core))))
                   core)))))))
-
-;; (let+ (((&STRUCTURE-R/O %CLOSE-PATH-) #:OBJECT1030))
-;;   (WRITE-STRING "\\pgfpathclose" STREAM))
-
 
 ;;; Definitions for particular LET+ forms.
 ;;; 
@@ -256,15 +258,14 @@ array-elements.  Read-only accessor, values assigned to VARIABLEs."
 
 (define-let+-expansion (&flet (function-name lambda-list
                                              &body function-body)
-                           :once-only? nil)
+                           :uses-value? nil)
   "LET+ form for function definitions.  Expands into an FLET."
-  (assert (not value) () "&FLET forms don't take a value.")
   `(flet ((,function-name ,lambda-list ,@function-body))
      ,@body))
 
 (define-let+-expansion (&labels (function-name lambda-list 
                                                &body function-body)
-                           :once-only? nil)
+                           :uses-value? nil)
   "LET+ form for function definitions.  Expands into an LABELS, thus allowing
 recursive functions."
   (assert (not value) () "&LABELS forms don't take a value.")
@@ -272,7 +273,7 @@ recursive functions."
      ,@body))
 
 (define-let+-expansion (&macrolet (macro-name lambda-list  &body macro-body)
-                           :once-only? nil)
+                           :uses-value? nil)
   "LET+ form for local macro definitions.  Expands into an MACROLET."
   (assert (not value) () "&MACROLET forms don't take a value.")
   `(macrolet ((,macro-name ,lambda-list ,@macro-body))
