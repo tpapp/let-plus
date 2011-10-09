@@ -69,3 +69,17 @@ closure"
   `(progn
      (assert ,test-form ,@arguments)
      ,@body))
+
+(define-let+-expansion (&once-only specs :uses-value? nil)
+  "Expand to (ONCE-ONLY SPECS ...)."
+  `(once-only ,specs ,@body))
+
+(define-let+-expansion (&with-gensyms names :uses-value? nil)
+  "Expand to (WITH-GENSYMS NAMES ...)."
+  `(with-gensyms ,names ,@body))
+
+(define-let+-expansion (&complex (x y))
+  "Access real and imaginary part of the value.  Read-only."
+  `(let ((,x (realpart ,value))
+         (,y (imagpart ,value)))
+     ,@body))

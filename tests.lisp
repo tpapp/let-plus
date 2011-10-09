@@ -200,3 +200,10 @@ should)."
   ;;                (values a b c))
   ;;              (values 1 2 3))
   )
+
+(addtest (let-plus-tests)
+  test-complex
+  (let ((c #C(3 5)))
+    (let+ (((&complex x y) c))
+      (ensure-same x 3)
+      (ensure-same y 5))))

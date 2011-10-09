@@ -18,7 +18,6 @@
 
    ;; extensions
    
-   &flet+ &labels+ lambda+ defun+ define-structure-let+ &fwrap &assert
-   
-   ))
+   &flet+ &labels+ lambda+ defun+ define-structure-let+ &fwrap &assert 
+   &once-only &with-gensyms &complex))
 
