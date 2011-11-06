@@ -45,6 +45,10 @@ should)."
     (ensure-same b 1)
     (ensure-same c 4)))
 
+(addtest (let-plus-tests)
+  test-unrecognized-form
+  (ensure-warning (macroexpand '(let+ (((&does-not-exist a b) '(1 2 3)))))))
+
 (defclass foo ()
   ((bar :accessor bar :initarg :bar)
    (baz :accessor baz-acc :initarg :baz))

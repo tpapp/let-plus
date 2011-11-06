@@ -99,6 +99,9 @@ form (accessor value subscripts)."
   semantics of returned values.")
   (:method (first rest value body)
     ;; forms not recognized as anything else are destructured
+    (when (and (symbolp first) (eql (aref (symbol-name first) 0) #\&))
+      (warn "~A looks like a LET+ keyword, but it has no expansion method ~
+      defined.  Treating it as a list." first))
     (let ((form (cons first rest)))
       (multiple-value-bind (form ignored) (replace-ignored form)
         `(destructuring-bind ,form ,value
