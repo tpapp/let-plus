@@ -2,13 +2,13 @@
 
 (defpackage #:let-plus-tests
   (:use #:cl #:alexandria #:lift #:let-plus)
-  (:export #:run-let-plus-tests))
+  (:export #:run))
 
 (in-package #:let-plus-tests)
 
 (deftestsuite let-plus-tests () ())
 
-(defun run-let-plus-tests ()
+(defun run ()
   "Run all the tests for LET-PLUS."
   (run-tests :suite 'let-plus-tests))
 
