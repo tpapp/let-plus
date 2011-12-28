@@ -141,8 +141,8 @@ appropriate checks."
                        `(&rest ,arguments)))
         (whole (gensym "WHOLE")))
     (multiple-value-bind (remaining-forms declarations docstring)
-        (parse-body body)
-      (sunless docstring (setf it "LET+ form."))
+        (parse-body body :documentation t)
+      (sunless docstring (setf it (format nil "LET+ form ~A." name)))
       `(progn
          (defmacro ,name (&whole ,whole ,@arguments)
            ,docstring
