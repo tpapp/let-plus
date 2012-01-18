@@ -211,3 +211,9 @@ should)."
     (let+ (((&complex x y) c))
       (ensure-same x 3)
       (ensure-same y 5))))
+
+(addtest (let-plus-tests)
+  test-nil
+  (ensure (let+ ((() '())) t))
+  (ensure-error (let+ ((() (1)))))
+  (ensure-error (let+ ((() 1)))))
