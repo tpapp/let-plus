@@ -24,7 +24,7 @@ the second value."
 
 ;;; LET+ recognizes three general kinds of syntax for accessing elements in
 ;;; some structure (in the abstract sense):
-;;; 
+;;;
 ;;; 1. "slots", of the form (VARIABLE &optional (SLOT VARIABLE)) SLOT is used
 ;;;    in the general sense, it can also be an accessor.  This is similar to
 ;;;    the syntax of WITH-SLOTS etc.
@@ -33,10 +33,10 @@ the second value."
 ;;;    which allows a default value.  This is used for hash tables, property
 ;;;    lists, etc.  If KEY is NIL, VARIABLE is used instead, if another
 ;;;    symbol, it is quoted.
-;;; 
+;;;
 ;;; 3. array-like reference (VARIABLE &rest SUBSCRIPTS).  This is used for
 ;;;    array elements.
-;;; 
+;;;
 ;;; If a single symbol is given, it is used as a variable for entries and
 ;;; slots.
 
@@ -146,7 +146,7 @@ appropriate checks."
       `(progn
          (defmacro ,name (&whole ,whole ,@arguments)
            ,docstring
-           (declare (ignore 
+           (declare (ignore
                      ,@(remove-if (lambda (symbol)
                                     (or (not symbol)
                                         (not (symbolp symbol))
@@ -177,7 +177,7 @@ appropriate checks."
                   core)))))))
 
 ;;; Definitions for particular LET+ forms.
-;;; 
+;;;
 ;;; When both read only and read/write forms make sense, the former should
 ;;; have the suffix -r/o and the latter should be without the suffix in order
 ;;; to maintain a consistent naming scheme.
@@ -209,7 +209,7 @@ appropriate checks."
 CONC-NAME."
   (check-type conc-name symbol)
   `(symbol-macrolet
-       ,(expand-slot-forms slots 
+       ,(expand-slot-forms slots
                            (lambda (slot) `(,(symbolicate conc-name slot)
                                             ,value)))
      ,@body))
@@ -218,7 +218,7 @@ CONC-NAME."
   "LET+ form for slots of a structure, with accessors generated using
 CONC-NAME.  Read-only version."
   (check-type conc-name symbol)
-  `(let+ ,(expand-slot-forms slots 
+  `(let+ ,(expand-slot-forms slots
                              (lambda (slot)
                                `(,(symbolicate conc-name slot) ,value)))
      ,@body))
@@ -226,9 +226,11 @@ CONC-NAME.  Read-only version."
 (define-let+-expansion (&values values :once-only? nil)
   "LET+ form for multiple values."
   (multiple-value-bind (values ignored) (replace-ignored values)
-    `(multiple-value-bind ,values ,value
-       (declare (ignore ,@ignored))
-       ,@body)))
+    (let ((temps (map-into (make-list (length values)) #'gensym)))
+      `(multiple-value-bind ,temps ,value
+         (declare (ignore ,@ignored))
+         (let+ (,@(mapcar #'list values temps))
+           ,@body)))))
 
 (defmethod let+-expansion ((array array) value body)
   "LET+ expansion for mapping array elements to variables."
@@ -237,7 +239,7 @@ CONC-NAME.  Read-only version."
     (dotimes (row-major-index (array-total-size array))
       (let ((variable (row-major-aref array row-major-index)))
         (unless (ignored? variable)
-          (push `(,variable 
+          (push `(,variable
                   (row-major-aref ,value-var ,row-major-index))
                 bindings))))
     `(let ((,value-var ,value))
@@ -267,7 +269,7 @@ array-elements.  Read-only accessor, values assigned to VARIABLEs."
   `(flet ((,function-name ,lambda-list ,@function-body))
      ,@body))
 
-(define-let+-expansion (&labels (function-name lambda-list 
+(define-let+-expansion (&labels (function-name lambda-list
                                                &body function-body)
                            :uses-value? nil)
   "LET+ form for function definitions.  Expands into an LABELS, thus allowing
@@ -286,7 +288,7 @@ recursive functions."
 (define-let+-expansion (&plist entries)
   "LET+ form for property lists.  Each entry is (variable &optional
 key default)."
-  `(symbol-macrolet 
+  `(symbol-macrolet
        ,(expand-entry-forms entries
                             (lambda (key default)
                               `(getf ,value ,key ,default)))
@@ -301,7 +303,7 @@ key default)."
 (define-let+-expansion (&hash-table entries)
   "LET+ form for hash tables.  Each entry is (variable &optional key
 default)."
-  `(symbol-macrolet 
+  `(symbol-macrolet
        ,(expand-entry-forms entries
                             (lambda (key default)
                               `(gethash ,key ,value ,default)))
