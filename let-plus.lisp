@@ -225,11 +225,23 @@ CONC-NAME.  Read-only version."
 
 (define-let+-expansion (&values values :once-only? nil)
   "LET+ form for multiple values."
-  (multiple-value-bind (values ignored) (replace-ignored values)
-    (let ((temps (map-into (make-list (length values)) #'gensym)))
-      `(multiple-value-bind ,temps ,value
-         (declare (ignore ,@ignored))
-         (let+ (,@(mapcar #'list values temps))
+  (multiple-value-bind (values ignored-values) (replace-ignored values)
+    (let (live-values
+	  temps
+	  live-temps
+	  ignored-temps)
+      (mapc #'(lambda (value)
+		(let ((temp (gensym)))
+		 (push temp temps)
+		 (if (member value ignored-values)
+		     (push temp ignored-temps)
+		     (progn
+		       (push value live-values)
+		       (push temp live-temps)))))
+	    values)
+      `(multiple-value-bind ,(nreverse temps) ,value
+         (declare (ignore ,@(nreverse ignored-temps)))
+         (let+ (,@(nreverse (mapcar #'list live-values live-temps)))
            ,@body)))))
 
 (defmethod let+-expansion ((array array) value body)
