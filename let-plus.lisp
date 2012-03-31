@@ -229,24 +229,13 @@ CONC-NAME.  Read-only version."
 
 (define-let+-expansion (&values values :once-only? nil)
   "LET+ form for multiple values."
-  (multiple-value-bind (values ignored-values) (replace-ignored values)
-    (let (live-values
-	  temps
-	  live-temps
-	  ignored-temps)
-      (mapc #'(lambda (value)
-		(let ((temp (gensym)))
-		 (push temp temps)
-		 (if (member value ignored-values)
-		     (push temp ignored-temps)
-		     (progn
-		       (push value live-values)
-		       (push temp live-temps)))))
-	    values)
-      `(multiple-value-bind ,(nreverse temps) ,value
-         (declare (ignore ,@(nreverse ignored-temps)))
-         (let+ (,@(nreverse (mapcar #'list live-values live-temps)))
-           ,@body)))))
+  (let ((values-and-temps (mapcar (lambda (v) (list v (gensym))) values)))
+    `(multiple-value-bind ,(mapcar #'second values-and-temps) ,value
+       (declare (ignore ,@(loop for (v g) in values-and-temps
+                                when (ignored? v)
+                                  collect g)))
+       (let+ ,(remove-if (compose #'ignored? #'car) values-and-temps)
+         ,@body))))
 
 (defmethod let+-expansion ((array array) value body)
   "LET+ expansion for mapping array elements to variables."

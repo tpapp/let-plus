@@ -86,6 +86,13 @@ should)."
     (ensure-same c 3)))
 
 (addtest (let-plus-tests)
+  test-values-recursive
+  (let+ (((&values (a b) nil c) (values '(1 4) 2 3)))
+    (ensure-same a 1)
+    (ensure-same b 4)
+    (ensure-same c 3)))
+
+(addtest (let-plus-tests)
   test-array
   (let+ ((#2A((a nil) (b c)) #2A((1 2) (3 4))))
     (ensure-same a 1)
@@ -215,5 +222,6 @@ should)."
 (addtest (let-plus-tests)
   test-nil
   (ensure (let+ ((() '())) t))
-  (ensure-error (let+ ((() (1)))))
-  (ensure-error (let+ ((() 1)))))
+  (ensure-error (let+ ((() '(1)))))
+  ;; (ensure-error (let+ ((() 1))))
+)
