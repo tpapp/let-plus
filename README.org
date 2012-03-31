@@ -117,7 +117,7 @@ ones.  Some forms ignore =NIL= variables (see their documentation).
 #+END_SRC
 
 - =((&array-elements (variable subscript*)*) value)=, also
-     =&array-elements= :: Array elements with given subscripts are
+     =&array-elements-r/o= :: Array elements with given subscripts are
      assigned to the variables.  Example:
 #+BEGIN_SRC lisp
 (let+ (((&array-elements (a 0 1)
@@ -139,7 +139,7 @@ ones.  Some forms ignore =NIL= variables (see their documentation).
   (add2 5))  ; => 7
 #+END_SRC
 
-- =((&plist (variable key [default])*) =, also =&plist-r/o= :: Access
+- =((&plist (variable key [default])*)=, also =&plist-r/o= :: Access
      to property lists.  When =key= is =NIL=, =variable= is used
      instead, and =default= is used if the element does not exist in
      the value (note that default may be evaluated multiple times when
