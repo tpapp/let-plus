@@ -191,9 +191,10 @@ appropriate checks."
                                                     `(,accessor ,value)))
      ,@body))
 
-(define-let+-expansion (&accessors-r/o slots)
+(define-let+-expansion (&accessors-r/o accessors)
   "LET+ form, similar to WITH-ACCESSORS, but read-only."
-  `(let+ ,(expand-slot-forms slots (lambda (accessor) `(,accessor ,value)))
+  `(let+ ,(expand-slot-forms accessors (lambda (accessor)
+                                         `(,accessor ,value)))
      ,@body))
 
 (define-let+-expansion (&slots slots :once-only? nil)
