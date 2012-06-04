@@ -7,7 +7,6 @@
    ;; basic user interface
 
    #:let+
-   #:ignored?
    #:&ign
    #:&accessors #:&accessors-r/o
    #:&slots #:&slots-r/o
