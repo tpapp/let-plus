@@ -7,11 +7,15 @@
    ;; basic user interface
 
    #:let+
-
-
-   #:&ign #:&accessors #:&accessors-r/o #:&slots #:&slots-r/o #:&structure
-   #:&structure-r/o #:&values #:&array-elements #:&array-elements-r/o #:&flet
-   #:&labels #:&macrolet #:&symbol-macrolet #:&plist #:&plist-r/o
+   #:ignored?
+   #:&ign
+   #:&accessors #:&accessors-r/o
+   #:&slots #:&slots-r/o
+   #:&structure #:&structure-r/o
+   #:&values
+   #:&array-elements #:&array-elements-r/o
+   #:&flet #:&labels #:&macrolet #:&symbol-macrolet
+   #:&plist #:&plist-r/o
    #:&hash-table #:&hash-table-r/o
 
    ;; defining new forms
@@ -20,5 +24,7 @@
 
    ;; extensions
 
-   #:&flet+ #:&labels+ #:lambda+ #:defun+ #:define-structure-let+ #:&fwrap
+   #:&flet+ #:&labels+
+   #:lambda+ #:defun+
+   #:define-structure-let+ #:&fwrap
    #:&assert #:&once-only #:&with-gensyms #:&complex))
