@@ -105,7 +105,7 @@ form (accessor value subscripts)."
   semantics of returned values.")
   (:method (first rest value body)
     ;; forms not recognized as anything else are destructured
-    (when (and (symbolp first) (&-symbol? first)
+    (when (and (symbolp first) (not (ignored? first)) (&-symbol? first)
                (not (find first lambda-list-keywords)))
       (warn "~A looks like a LET+ keyword, but it has no expansion method ~
       defined.  Treating it as a lambda list." first))
