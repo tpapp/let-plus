@@ -22,9 +22,10 @@ the second value."
                          (awhen (cdr tree) (traverse it))))))
       (values (traverse tree) (nreverse ignored)))))
 
-(defun &-symbol? (symbol)
-  "Test whether the symbol's name starts with a & character."
-  (char= (aref (symbol-name symbol) 0) #\&))
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (defun &-symbol? (symbol)
+    "Test whether the symbol's name starts with a & character."
+    (char= (aref (symbol-name symbol) 0) #\&)))
 
 ;;; LET+ recognizes three general kinds of syntax for accessing elements in
 ;;; some structure (in the abstract sense):
