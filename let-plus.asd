@@ -11,6 +11,9 @@
                (:file "extensions"))
   :depends-on (#:alexandria #:anaphora))
 
+(defmethod perform ((op test-op) (sys (eql (find-system '#:let-plus))))
+  (operate 'test-op '#:let-plus-tests))
+
 (asdf:defsystem #:let-plus-tests
   :description "Tests for the LET-PLUS library."
   :author "Tamas K. Papp <tkpapp@gmail.com>."
@@ -18,3 +21,7 @@
   :serial t
   :components ((:file "tests"))
   :depends-on (#:lift #:let-plus))
+
+(defmethod perform ((op test-op) (sys (eql (find-system '#:let-plus-tests))))
+  (operate 'load-op '#:let-plus-tests)
+  (funcall (find-symbol (string '#:run) '#:let-plus-tests)))
