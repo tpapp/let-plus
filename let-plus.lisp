@@ -22,6 +22,10 @@ the second value."
                          (awhen (cdr tree) (traverse it))))))
       (values (traverse tree) (nreverse ignored)))))
 
+(defun &-symbol? (symbol)
+  "Test whether the symbol's name starts with a & character."
+  (char= (aref (symbol-name symbol) 0) #\&))
+
 ;;; LET+ recognizes three general kinds of syntax for accessing elements in
 ;;; some structure (in the abstract sense):
 ;;;
@@ -86,14 +90,13 @@ form (accessor value subscripts)."
     `(destructuring-bind nil ,value
        ,@body))
   (:method ((variable symbol) value body)
-    (when (char= (aref (symbol-name variable) 0) #\&)
+    (when (and (&-symbol? variable) (not (ignored? variable)))
       (warn "Possibly left out one level of nesting in LET+ form (~A ~A)."
             variable value))
-    (if value
-        `(let ((,variable ,value))
-           ,@body)
-        `(let (,variable)
-           ,@body)))
+    (multiple-value-bind (variable ignored) (replace-ignored variable)
+      `(let ((,variable ,@(when value `(,value))))
+         (declare (ignore ,@ignored))
+         ,@body)))
   (:method ((form list) value body)
     (let+-expansion-for-list (first form) (rest form) value body)))
 
@@ -102,7 +105,7 @@ form (accessor value subscripts)."
   semantics of returned values.")
   (:method (first rest value body)
     ;; forms not recognized as anything else are destructured
-    (when (and (symbolp first) (eql (aref (symbol-name first) 0) #\&)
+    (when (and (symbolp first) (&-symbol? first)
                (not (find first lambda-list-keywords)))
       (warn "~A looks like a LET+ keyword, but it has no expansion method ~
       defined.  Treating it as a lambda list." first))
@@ -155,8 +158,7 @@ appropriate checks."
                                         (not (symbolp symbol))
                                         (keywordp symbol)
                                         (find symbol lambda-list-keywords)
-                                        (eql (aref (symbol-name symbol) 0)
-                                             #\&)))
+                                        (&-symbol? symbol)))
                                   (flatten arguments))))
            ,@declarations
            ,whole)
