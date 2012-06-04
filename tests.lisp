@@ -81,20 +81,20 @@ should)."
 
 (addtest (let-plus-tests)
   test-values
-  (let+ (((&values a nil c) (values 1 2 3)))
+  (let+ (((&values a &ign c) (values 1 2 3)))
     (ensure-same a 1)
     (ensure-same c 3)))
 
 (addtest (let-plus-tests)
   test-values-recursive
-  (let+ (((&values (a b) nil c) (values '(1 4) 2 3)))
+  (let+ (((&values (a b) &ign c) (values '(1 4) 2 3)))
     (ensure-same a 1)
     (ensure-same b 4)
     (ensure-same c 3)))
 
 (addtest (let-plus-tests)
   test-array
-  (let+ ((#2A((a nil) (b c)) #2A((1 2) (3 4))))
+  (let+ ((#2A((a &ign) (b c)) #2A((1 2) (3 4))))
     (ensure-same a 1)
     (ensure-same b 3)
     (ensure-same c 4))

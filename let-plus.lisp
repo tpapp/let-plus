@@ -6,7 +6,7 @@
 
 (defun ignored? (symbol)
   "Return a boolean determining if a variable is to be ignored."
-  (not symbol))
+  (eq symbol '&ign))
 
 (defun replace-ignored (tree)
   "Replace ignored variables in TREE with a gensym, return a list of these as
