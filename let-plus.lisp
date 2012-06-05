@@ -282,8 +282,14 @@ NOTE: It is unlikely that you need to used this function, see the note above its
                                                &body function-body)
                            :uses-value? nil)
   "LET+ form for function definitions.  Expands into an LABELS, thus allowing recursive functions."
-  `(labels ((,function-name ,lambda-list ,@function-body))
-     ,@body))
+  (if (typep (first body) '(cons (eql cl:labels)))
+      (destructuring-bind (bindings &rest first-body) (rest (first body))
+        `(labels ((,function-name ,lambda-list ,@function-body)
+                  ,@bindings)
+           ,@first-body
+           ,@(rest body)))
+      `(labels ((,function-name ,lambda-list ,@function-body))
+         ,@body)))
 
 (define-let+-expansion (&macrolet (macro-name lambda-list  &body macro-body)
                            :uses-value? nil)

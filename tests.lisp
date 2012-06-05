@@ -126,6 +126,23 @@ should)."
     (ensure-same (my-factorial 4) 24)))
 
 (addtest (let-plus-tests)
+  test-labels/mutual-recursion
+  (let+ (((&labels my-even? (x)
+            (cond
+              ((zerop x)
+               t)
+              ((plusp x)
+               (my-odd? (1- x)))
+              (t
+               nil))))
+         ((&labels my-odd? (x)
+            (my-even? (1- x)))))
+    (ensure-same (my-odd?  4) nil)
+    (ensure-same (my-even? 4) t)
+    (ensure-same (my-odd?  5) t)
+    (ensure-same (my-even? 5) nil)))
+
+(addtest (let-plus-tests)
   test-plist
   (test-r/o-and-r/w (list 'a 1 :b 2 'c '3)
                     ((a 1) (b 2) (c 3) (d 4))
