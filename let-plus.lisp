@@ -2,31 +2,6 @@
 
 (in-package #:let-plus)
 
-;;; helper functions/macros
-
-(defun ignored? (symbol)
-  "Return a boolean determining if a variable is to be ignored."
-  (eq symbol '&ign))
-
-(defun replace-ignored (tree)
-  "Replace ignored variables in TREE with a gensym, return a list of these as
-the second value."
-  (let (ignored)
-    (labels ((traverse (tree)
-               (if (atom tree)
-                   (if (ignored? tree)
-                       (aprog1 (gensym)
-                         (push it ignored))
-                       tree)
-                   (cons (traverse (car tree))
-                         (awhen (cdr tree) (traverse it))))))
-      (values (traverse tree) (nreverse ignored)))))
-
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (defun &-symbol? (symbol)
-    "Test whether the symbol's name starts with a & character."
-    (char= (aref (symbol-name symbol) 0) #\&)))
-
 ;;; LET+ recognizes three general kinds of syntax for accessing elements in
 ;;; some structure (in the abstract sense):
 ;;;
@@ -45,43 +20,49 @@ the second value."
 ;;; If a single symbol is given, it is used as a variable for entries and
 ;;; slots.
 
-(defun expand-slot-forms (slots accessor-generator)
-  "Return a list of expanded bindings, calling (ACCESSOR-GENERATOR KEY)"
-  (let (bindings)
-    (loop for entry :in slots do
-      (destructuring-bind (variable &optional (key variable))
-          (ensure-list entry)
-        (when variable
-          (push `(,variable ,(funcall accessor-generator key)) bindings))))
-    (nreverse bindings)))
+;;; Ignored variables
+;;;
+;;; The preferred method is expanding into LET+ forms which handle ignored
+;;; values automatically -- LET+ just ignores these variables.  Use
+;;; REPLACE-IGNORED only when this is not feasible or desirable (eg using
+;;; destructuring provided by CL).
 
-(defun expand-entry-forms (entries accessor-generator)
-  "Return a list of expanded bindings from , calling (ACESSOR-GENERATOR KEY
-DEFAULT).  Each entry is (VARIABLE &optional KEY DEFAULT).  When KEY is NIL,
-VARIABLE is used."
-  (mapcar (lambda (entry)
-            (destructuring-bind (variable &optional key default)
-                (ensure-list entry)
-              `(,variable ,(funcall accessor-generator
-                                    (typecase key
-                                      (null `',variable)
-                                      (symbol `',key)
-                                      (t key))
-                                    default))))
-          entries))
+(defun ignored? (symbol)
+  "Return a boolean determining if a variable is to be ignored.
 
-(defun expand-array-elements (value array-elements &optional (accessor 'aref))
-  "Expand a list of (binding &rest subscripts) to a list of bindings of the
-form (accessor value subscripts)."
-  (mapcar (lambda (array-element)
-            `(,(first array-element)
-               (,accessor ,value ,@(rest array-element))))
-          array-elements))
+NOTE: It is unlikely that you need to used this function, see the note above
+its definition."
+  (eq symbol '&ign))
+
+(defun replace-ignored (tree)
+  "Replace ignored variables in TREE with a gensym, return a list of these as
+the second value.
+
+NOTE: It is unlikely that you need to used this function, see the note above
+its definition"
+  (let (ignored)
+    (labels ((traverse (tree)
+               (if (atom tree)
+                   (if (ignored? tree)
+                       (aprog1 (gensym)
+                         (push it ignored))
+                       tree)
+                   (cons (traverse (car tree))
+                         (awhen (cdr tree) (traverse it))))))
+      (values (traverse tree) (nreverse ignored)))))
 
 ;;; LET+ uses generic functions for expansion.  They are dispatched on the
 ;;; FORM, and further on the first element if it is a list.  LET+-EXPANSION
 ;;; should wrap BODY in the desired forms, implementing the expansion.  The
 ;;; recursive expansion of multiple forms is done by the LET+ macro.
+;;;
+;;; LET+ forms start with & (except for those expanding into LET(*) and
+;;; DESTRUCTURING-BIND), although this convention is not enfored.
+
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (defun &-symbol? (symbol)
+    "Test whether the symbol's name starts with a & character."
+    (char= (aref (symbol-name symbol) 0) #\&)))
 
 (defgeneric let+-expansion (form value body)
   (:documentation "Return an expansion for a LET+ form.")
@@ -91,13 +72,13 @@ form (accessor value subscripts)."
     `(destructuring-bind nil ,value
        ,@body))
   (:method ((variable symbol) value body)
-    (when (and (&-symbol? variable) (not (ignored? variable)))
-      (warn "Possibly left out one level of nesting in LET+ form (~A ~A)."
-            variable value))
-    (multiple-value-bind (variable ignored) (replace-ignored variable)
-      `(let ((,variable ,@(when value `(,value))))
-         (declare (ignore ,@ignored))
-         ,@body)))
+    (cond
+      ((ignored? variable) `(progn ,@body))
+      ((&-symbol? variable)
+       (warn "Possibly left out one level of nesting in LET+ form (~A ~A)."
+             variable value))
+      (t `(let ((,variable ,@(when value `(,value))))
+            ,@body))))
   (:method ((form list) value body)
     (let+-expansion-for-list (first form) (rest form) value body)))
 
@@ -140,7 +121,7 @@ Most accepted forms start with &."
 ARGUMENTS is destructured if a list.  A placeholder macro is defined with
 NAME, using DOCSTRING and ARGUMENTS.  The value form is bound to
 VALUE-VAR (wrapped in ONCE-ONLY when ONCE-ONLY?), while the body is bound to
-BODY-VAR.  USES-VALUE? determines is the form uses a value, and generates the
+BODY-VAR.  USES-VALUE? determines if the form uses a value, and generates the
 appropriate checks."
   (let ((arguments-var (gensym "ARGUMENTS"))
         (arguments (if (listp arguments)
@@ -187,6 +168,42 @@ appropriate checks."
 ;;; When both read only and read/write forms make sense, the former should
 ;;; have the suffix -r/o and the latter should be without the suffix in order
 ;;; to maintain a consistent naming scheme.
+
+;;; helper functions
+
+(defun expand-slot-forms (slots accessor-generator)
+  "Return a list of expanded bindings, calling (ACCESSOR-GENERATOR KEY)"
+  (let (bindings)
+    (loop for entry :in slots do
+      (destructuring-bind (variable &optional (key variable))
+          (ensure-list entry)
+        (when variable
+          (push `(,variable ,(funcall accessor-generator key)) bindings))))
+    (nreverse bindings)))
+
+
+(defun expand-entry-forms (entries accessor-generator)
+  "Return a list of expanded bindings from , calling (ACESSOR-GENERATOR KEY
+DEFAULT).  Each entry is (VARIABLE &OPTIONAL KEY DEFAULT).  When KEY is NIL,
+VARIABLE is used."
+  (mapcar (lambda (entry)
+            (destructuring-bind (variable &optional key default)
+                (ensure-list entry)
+              `(,variable ,(funcall accessor-generator
+                                    (typecase key
+                                      (null `',variable)
+                                      (symbol `',key)
+                                      (t key))
+                                    default))))
+          entries))
+
+(defun expand-array-elements (value array-elements &optional (accessor 'aref))
+  "Expand a list of (BINDING &REST SUBSCRIPTS) forms to a list of bindings of
+the form (ACCESSOR VALUE SUBSCRIPTS)."
+  (mapcar (lambda (array-element)
+            `(,(first array-element)
+               (,accessor ,value ,@(rest array-element))))
+          array-elements))
 
 (define-let+-expansion (&accessors accessors)
   "LET+ form, similar to WITH-ACCESSORS."
@@ -255,6 +272,8 @@ CONC-NAME.  Read-only version."
                       ',(array-dimensions array)))
        (let+ ,(nreverse bindings)
          ,@body))))
+
+
 
 (define-let+-expansion (&array-elements array-elements)
   "LET+ form, mapping (variable &rest subscripts) specifications to
