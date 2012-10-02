@@ -9,7 +9,7 @@ destructured and the destructing form, wrapping the original body."
     (list arguments
           `(let+ ,(mapcar #'list lambda-list arguments)
              ,@body))))
-                      
+
 (define-let+-expansion (&flet+ (function-name lambda-list
                                               &body function-body)
                                :uses-value? nil)
@@ -34,7 +34,7 @@ destructured and the destructing form, wrapping the original body."
   "DEFUN that destructures its arguments using LET+."
   `(defun ,name ,@(destructured-lambda-list-forms lambda-list body)))
 
-(defmacro define-structure-let+ ((name 
+(defmacro define-structure-let+ ((name
                                   &key (conc-name (symbolicate name #\-))
                                        (r/w (symbolicate #\& name))
                                        (r/o (symbolicate #\& name '#:-r/o)))
