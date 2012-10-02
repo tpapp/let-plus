@@ -10,7 +10,7 @@ extension of =let*=.
 
 - placeholder macros allow editor hints and syntax highlighting
 
-- =NIL= for ignored values (in forms where that makes sense)
+- =&ign= for ignored values (in forms where that makes sense)
 
 - very easy to extend
 
@@ -44,36 +44,23 @@ binding ::= symbol || (form [init-form])
 #+END_SRC
 
 =LET+= is recursive: each binding is in the scope of the previous
-ones.  Some forms ignore =NIL= variables (see their documentation).  
+ones.  Forms ignore =&ign= variables (where applicable).
 
 ** Built-in forms
 
-   Forms which provide both read-write and read-only access are
-   available as =&form= and =&form-r/o=.  The first one always uses
-   symbol macros, so you can use =setf=.  The second one reads the
-   values at the beginning of the list from value: you can change
-   these variables after that without having any effect on the
-   original value.  Read-only forms may also provide a slight increase
-   in speed, and promote good style --- you can use them to signal
-   that you will not change the original structure.
+Forms which provide both read-write and read-only access are available as =&form= and =&form-r/o=.  The first one always uses symbol macros, so you can use =setf=.  The second one reads the values at the beginning of the list from value: you can change these variables after that without having any effect on the original value.  Read-only forms may also provide a slight increase in speed, and promote good style --- you can use them to signal that you will not change the original structure.
 
-   The following forms are defined:
+The following forms are defined:
 
 - =var=, =(var)=, =(var value)= :: These behave just like they do in =let*=.
 
-- =(list value)= :: When =list= is not recognized as any of the forms
-  below, it is simply destructured using =destructuring-bind=.  =NIL=s
-  are ignored.  Example:
+- =(list value)= :: When =list= is not recognized as any of the forms below, it is simply destructured using =destructuring-bind=.  =&ign= are ignored.  Example:
 #+BEGIN_SRC lisp
-(let+ (((a (b &optional (c 3)) nil &key (d 1 d?)) '(1 (2) 7 :d 4)))
+(let+ (((a (b &optional (c 3)) &ign &key (d 1 d?)) '(1 (2) 7 :d 4)))
   (list a b c d d?))  ; => (1 2 3 4 T)
 #+END_SRC                    
      
-- =((&slots slot*) value)=, also =&slots-r/o= :: Similarly to
-     =with-slots=, each =slot= has the syntax =variable=, =(variable)=
-     (for these, the variable name is also used for the slot name) or
-     =(variable slot-name)=.  =&slots-r/o= provides read-only
-     bindings.
+- =((&slots slot*) value)=, also =&slots-r/o= :: Similarly to =with-slots=, each =slot= has the syntax =variable= or =(variable)= (for these, the variable name is also used for the slot name) or =(variable slot-name)=.  =&slots-r/o= provides read-only bindings.
 
      Example:
 #+BEGIN_SRC lisp
@@ -85,40 +72,35 @@ ones.  Some forms ignore =NIL= variables (see their documentation).
   (list a my-b))  ; => (1 2)
 #+END_SRC
 
-- =((&accessors accessor*) value)=, also =&accessors-r/o= :: Syntax
-     similar to =&slots=.  Continuing the example above:
+- =((&accessors accessor*) value)=, also =&accessors-r/o= :: Syntax similar to =&slots=, but uses accessors.  Continuing the example above:
 #+BEGIN_SRC lisp
 (let+ (((&accessors a (b b-accessor)) (make-instance 'foo-class :a 1 :b 2)))
   (list a b))  ; => (1 2)
 #+END_SRC
 
-- =((&structure conc-name slot*) value)=, also =&structure-r/o= ::
-  Slot access for structures.  =Conc-name= is prepended to the
-  accessors (you need to include the =-= if there is one).  Example:
+- =((&structure conc-name slot*) value)=, also =&structure-r/o= :: Slot access for structures.  =Conc-name= is prepended to the accessors (you need to include the =-= if there is one).  Example:
 #+BEGIN_SRC lisp
 (defstruct foo-struct c d)
 (let+ (((&structure foo-struct- c (my-d d)) (make-foo-struct :c 3 :d 4)))
   (list c my-d))  ; => (3 4)
 #+END_SRC  
 
-- =((&values value*) form)= :: Similar to =multiple-value-bind=. =NIL=s are ignored.  Example:
+- =((&values value*) form)= :: Similar to =multiple-value-bind=.  =&ign= are ignored.  Example:
 #+BEGIN_SRC lisp
-(let+ (((&values a nil b) (values 1 2 3)))
+(let+ (((&values a &ign b) (values 1 2 3)))
   (list a b))  ; => (1 3)
 #+END_SRC
 
 - =(array value)= (only read-only version) :: The array is
-     destructured to the given elements, =NIL=s are ignored.  Indexes
+     destructured to the given elements, =&ign= are ignored.  Indexes
      use row-major access, determined at macroexpansion time.
      Example:
 #+BEGIN_SRC lisp
-(let+ ((#(a nil b) (vector 1 2 3)))
+(let+ ((#(a &ign b) (vector 1 2 3)))
   (list a b))  ; => (1 3)
 #+END_SRC
 
-- =((&array-elements (variable subscript*)*) value)=, also
-     =&array-elements-r/o= :: Array elements with given subscripts are
-     assigned to the variables.  Example:
+- =((&array-elements (variable subscript*)*) value)=, also =&array-elements-r/o= :: Array elements with given subscripts are assigned to the variables.  Example:
 #+BEGIN_SRC lisp
 (let+ (((&array-elements (a 0 1)
                          (b 2 0))
@@ -128,55 +110,50 @@ ones.  Some forms ignore =NIL= variables (see their documentation).
   (list a b))  ; => (1 4)
 #+END_SRC
 
-- =((&flet name lambda-list forms*))=, also =&labels= :: Function
-     bindings.  These have no value form. =&labels= allows the
-     function to refer to itself -- note that since =let+= is always
-     recursive, this is the only difference between the two forms.
-     Example:
+- =((&flet name lambda-list forms*))=, also =&labels= :: Function bindings.  These have no value form. =&labels= allows the function to refer to itself -- note that since =let+= is always recursive, this is the only difference between the two forms.  Example:
 #+BEGIN_SRC lisp
 (let+ (((&flet add2 (x)
           (+ x 2))))
   (add2 5))  ; => 7
 #+END_SRC
 
-- =((&plist (variable key [default])*)=, also =&plist-r/o= :: Access
-     to property lists.  When =key= is =NIL=, =variable= is used
-     instead, and =default= is used if the element does not exist in
-     the value (note that default may be evaluated multiple times when
-     using the read-write form which uses =symbol-macrolet=).  Example:
+- =((&plist (variable key [default])*)=, also =&plist-r/o= :: Access to property lists.  When =key= is not given, =variable= is used instead, and =default= is used if the element does not exist in the value (note that default may be evaluated multiple times when using the read-write form which uses =symbol-macrolet=).  Example:
 #+BEGIN_SRC lisp
 (let+ (((&plist a (my-b b) (c nil 3)) '(a 1 b 2)))
   (list a my-b c))  ; => (1 2 3)
 #+END_SRC     
 
-- =(((&hash-table (variable key [default])*)=, also
-     =&hash-table-r/o= :: Access to the elements of hash tables, the
-     semantics is the same as =&plist=.
+- =(((&hash-table (variable key [default])*)=, also =&hash-table-r/o= :: Access to the elements of hash tables, the semantics is the same as =&plist=.
+
+- =(&complex real imaginary)= :: Destructures complex numbers.
+
+** Nesting
+
+You can nest =let+= expressions when it makes sense.  For example, 
+#+BEGIN_SRC lisp
+(let+ ((#((&complex a b)) (vector (complex 1 2))))
+  (list a b))
+#+END_SRC
+should destructure the complex number that is the single element in the vector.
+
+If you find that =let+= does not nest properly, please report it as a bug.
 
 ** Convenience macros
 
-- =(defun+ name (argument*) form*)=, also =(lambda (argument*)
-     form*)= :: Work like =defun= and =lambda=, but arguments are
-     destructured using =let+=.  Example:
+- =(defun+ name (argument*) form*)=, also =(lambda (argument*) form*)= :: Work like =defun= and =lambda=, but arguments are destructured using =let+=.  Example:
 #+BEGIN_SRC lisp
 (defun+ foo ((&plist a b c) #(d e))
   (list a b c d e))
 
 (foo '(a 1 b 2 c 3) #(4 5))  ; => (1 2 3 4 5)
 #+END_SRC
+See also =&labels+= and =&lambda+=.
 
-- =(defstruct+ name-and-options &rest slot-descriptions)= :: Extends
-     =defstruct= with destructuring forms understood by the =let+=
-     macros.  Example:
-#+BEGIN_SRC lisp
-(defstruct+ interval left right)
+- =define-structure-let+= :: Can be used to provide destructuring forms for structures.
 
-(let+ ((interval (make-interval :left 1 :right 2))
-       ((&interval left right) interval))
-  (incf right 10)
-  interval)  ; => #S(INTERVAL :LEFT 1 :RIGHT 12)
-#+END_SRC
-   
+** Other forms
+
+- =(&once-only symbols ...)= and =(&with-gensyms symbols)= are useful for writing macros.
 
 * Extensions
 
@@ -184,25 +161,25 @@ Extending =let-plus= is very easy: if you want to use a form that
 resembles a list, you just have to define a method for
 =let+-expansion-for-list=.  There is a macro that helps you with that,
 called =define-let+-expansion=.  If the library didn't have
-=defstruct+=, we could define destructuring for the form =&interval=
-like this:
+=&complex=, we could define destructuring for the form like this:
 
 #+BEGIN_SRC lisp
-(define-let+-expansion (&interval (left right))
-  "LET+ expansion for &interval."
-  `(let+ (((&structure interval- left right) value))
+(define-let+-expansion (&complex (x y))
+  "Access real and imaginary part of the value.  Read-only."
+  `(let ((,x (realpart ,value))
+         (,y (imagpart ,value)))
      ,@body))
 #+END_SRC
 Some highlights:
 
-- this macro defines a "placeholder" macro =&interval= that should
+- this macro defines a "placeholder" macro =&complex= that should
   help with editor hints, but has no other purpose (it is not used in
   the expansion),
 - the macro is anaphoric, capturing =value= (the value form) and
   =body= (the body inside the =let+= form), you can customize both of
   this using keyword arguments,
 - unless required otherwise, =value= is wrapped in =once-only=
-  preventing multiple evaluations of the same form.
+  preventing multiple evaluations of the same form.  See the arguments =:uses-value?= and =:once-only?= for =define-let+-expansion=.
 
 If you want to extend =let+= with forms that are not lists (eg like
 the array syntax above), have a look at =let+-expansion=.
