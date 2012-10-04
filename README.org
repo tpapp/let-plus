@@ -129,7 +129,7 @@ The following forms are defined:
 
 ** Nesting
 
-You can nest =let+= expressions when it makes sense.  For example, 
+You can nest =let+= expressions when it makes sense (it doesn't always, especially for read/write slots, the read only form should work).  For example, 
 #+BEGIN_SRC lisp
 (let+ ((#((&complex a b)) (vector (complex 1 2))))
   (list a b))
