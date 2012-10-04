@@ -67,6 +67,7 @@ its definition"
 (defgeneric let+-expansion (form value body)
   (:documentation "Return an expansion for a LET+ form.")
   (:method (form value body)
+    (declare (ignore value body))
     (error "LET+ could not recognize ~A." form))
   (:method ((variable null) value body)
     `(destructuring-bind nil ,value
