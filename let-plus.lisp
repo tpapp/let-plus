@@ -327,8 +327,9 @@ key default)."
 
 (define-let+-expansion (&plist-r/o entries)
   "LET+ form for property lists, read only version."
-  `(let ,(expand-entry-forms entries
-                             (lambda (key default) `(getf ,value ,key ,default)))
+  `(let* ,(expand-entry-forms entries
+                              (lambda (key default)
+                                `(getf ,value ,key ,default)))
      ,@body))
 
 (define-let+-expansion (&hash-table entries)
