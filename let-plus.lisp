@@ -184,9 +184,7 @@ appropriate checks."
 
 
 (defun expand-entry-forms (entries accessor-generator)
-  "Return a list of expanded bindings from , calling (ACESSOR-GENERATOR KEY
-DEFAULT).  Each entry is (VARIABLE &OPTIONAL KEY DEFAULT).  When KEY is NIL,
-VARIABLE is used."
+  "Return a list of expanded bindings from ENTRIES, calling (ACESSOR-GENERATOR KEY DEFAULT).  Each entry is (VARIABLE &OPTIONAL KEY DEFAULT).  When KEY is NIL, VARIABLE is used."
   (mapcar (lambda (entry)
             (destructuring-bind (variable &optional key default)
                 (ensure-list entry)
