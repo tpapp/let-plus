@@ -30,16 +30,13 @@
 (defun ignored? (symbol)
   "Return a boolean determining if a variable is to be ignored.
 
-NOTE: It is unlikely that you need to used this function, see the note above
-its definition."
+NOTE: It is unlikely that you need to used this function, see the note above its definition."
   (eq symbol '&ign))
 
 (defun replace-ignored (tree)
-  "Replace ignored variables in TREE with a gensym, return a list of these as
-the second value.
+  "Replace ignored variables in TREE with a gensym, return a list of these as the second value.
 
-NOTE: It is unlikely that you need to used this function, see the note above
-its definition"
+NOTE: It is unlikely that you need to used this function, see the note above its definition."
   (let (ignored)
     (labels ((traverse (tree)
                (if (atom tree)
@@ -84,14 +81,12 @@ its definition"
     (let+-expansion-for-list (first form) (rest form) value body)))
 
 (defgeneric let+-expansion-for-list (first rest value body)
-  (:documentation "LET+-EXPANSION calls this for lists, see the latter for
-  semantics of returned values.")
+  (:documentation "LET+-EXPANSION calls this for lists, see the latter for semantics of returned values.")
   (:method (first rest value body)
     ;; forms not recognized as anything else are destructured
     (when (and (symbolp first) (not (ignored? first)) (&-symbol? first)
                (not (find first lambda-list-keywords)))
-      (warn "~A looks like a LET+ keyword, but it has no expansion method ~
-      defined.  Treating it as a lambda list." first))
+      (warn "~A looks like a LET+ keyword, but it has no expansion method defined.  Treating it as a lambda list." first))
     (let ((form (cons first rest)))
       (multiple-value-bind (form ignored) (replace-ignored form)
         `(destructuring-bind ,form ,value
@@ -99,8 +94,7 @@ its definition"
            ,@body)))))
 
 (defmacro let+ (bindings &body body)
-  "Destructuring bindings.  See the documentation of the LET-PLUS library.
-Most accepted forms start with &."
+  "Destructuring bindings.  See the documentation of the LET-PLUS library.  Most accepted forms start with &."
   (labels ((expand (bindings)
              (destructuring-bind (binding &rest other-bindings) bindings
                (destructuring-bind (form &optional value)
@@ -118,12 +112,7 @@ Most accepted forms start with &."
                                        (uses-value? t)
                                        (once-only? uses-value?))
                                  &body body)
-  "Define an expansion for LET+ forms which are lists, starting with NAME.
-ARGUMENTS is destructured if a list.  A placeholder macro is defined with
-NAME, using DOCSTRING and ARGUMENTS.  The value form is bound to
-VALUE-VAR (wrapped in ONCE-ONLY when ONCE-ONLY?), while the body is bound to
-BODY-VAR.  USES-VALUE? determines if the form uses a value, and generates the
-appropriate checks."
+  "Define an expansion for LET+ forms which are lists, starting with NAME.  ARGUMENTS is destructured if a list.  A placeholder macro is defined with NAME, using DOCSTRING and ARGUMENTS.  The value form is bound to VALUE-VAR (wrapped in ONCE-ONLY when ONCE-ONLY?), while the body is bound to BODY-VAR.  USES-VALUE? determines if the form uses a value, and generates the appropriate checks."
   (let ((arguments-var (gensym "ARGUMENTS"))
         (arguments (if (listp arguments)
                        arguments
@@ -197,8 +186,7 @@ appropriate checks."
           entries))
 
 (defun expand-array-elements (value array-elements &optional (accessor 'aref))
-  "Expand a list of (BINDING &REST SUBSCRIPTS) forms to a list of bindings of
-the form (ACCESSOR VALUE SUBSCRIPTS)."
+  "Expand a list of (BINDING &REST SUBSCRIPTS) forms to a list of bindings of the form (ACCESSOR VALUE SUBSCRIPTS)."
   (mapcar (lambda (array-element)
             `(,(first array-element)
                (,accessor ,value ,@(rest array-element))))
@@ -228,8 +216,7 @@ the form (ACCESSOR VALUE SUBSCRIPTS)."
      ,@body))
 
 (define-let+-expansion (&structure (conc-name &rest slots))
-  "LET+ form for slots of a structure, with accessors generated using
-CONC-NAME."
+  "LET+ form for slots of a structure, with accessors generated using CONC-NAME."
   (check-type conc-name symbol)
   `(symbol-macrolet
        ,(expand-slot-forms slots
@@ -238,8 +225,7 @@ CONC-NAME."
      ,@body))
 
 (define-let+-expansion (&structure-r/o (conc-name &rest slots))
-  "LET+ form for slots of a structure, with accessors generated using
-CONC-NAME.  Read-only version."
+  "LET+ form for slots of a structure, with accessors generated using CONC-NAME.  Read-only version."
   (check-type conc-name symbol)
   `(let+ ,(expand-slot-forms slots
                              (lambda (slot)
@@ -275,15 +261,12 @@ CONC-NAME.  Read-only version."
 
 
 (define-let+-expansion (&array-elements array-elements)
-  "LET+ form, mapping (variable &rest subscripts) specifications to
-array-elements.  VARIABLE is an accessor, which can be used for reading and
-writing array elements."
+  "LET+ form, mapping (variable &rest subscripts) specifications to array-elements.  VARIABLE is an accessor, which can be used for reading and writing array elements."
   `(symbol-macrolet ,(expand-array-elements value array-elements)
      ,@body))
 
 (define-let+-expansion (&array-elements-r/o array-elements)
-  "LET+ form, mapping (variable &rest subscripts) specifications to
-array-elements.  Read-only accessor, values assigned to VARIABLEs."
+  "LET+ form, mapping (variable &rest subscripts) specifications to array-elements.  Read-only accessor, values assigned to VARIABLEs."
   (once-only (value)
     `(let+ ,(expand-array-elements value array-elements)
        ,@body)))
@@ -298,8 +281,7 @@ array-elements.  Read-only accessor, values assigned to VARIABLEs."
 (define-let+-expansion (&labels (function-name lambda-list
                                                &body function-body)
                            :uses-value? nil)
-  "LET+ form for function definitions.  Expands into an LABELS, thus allowing
-recursive functions."
+  "LET+ form for function definitions.  Expands into an LABELS, thus allowing recursive functions."
   `(labels ((,function-name ,lambda-list ,@function-body))
      ,@body))
 
@@ -315,8 +297,7 @@ recursive functions."
      ,@body))
 
 (define-let+-expansion (&plist entries)
-  "LET+ form for property lists.  Each entry is (variable &optional
-key default)."
+  "LET+ form for property lists.  Each entry is (variable &optional key default)."
   `(symbol-macrolet
        ,(expand-entry-forms entries
                             (lambda (key default)
@@ -324,15 +305,14 @@ key default)."
      ,@body))
 
 (define-let+-expansion (&plist-r/o entries)
-  "LET+ form for property lists, read only version."
+  "LET+ form for property lists, read only version.  Each entry is (variable &optional key default)."
   `(let* ,(expand-entry-forms entries
                               (lambda (key default)
                                 `(getf ,value ,key ,default)))
      ,@body))
 
 (define-let+-expansion (&hash-table entries)
-  "LET+ form for hash tables.  Each entry is (variable &optional key
-default)."
+  "LET+ form for hash tables.  Each entry is (variable &optional key default)."
   `(symbol-macrolet
        ,(expand-entry-forms entries
                             (lambda (key default)
@@ -340,8 +320,7 @@ default)."
      ,@body))
 
 (define-let+-expansion (&hash-table-r/o entries)
-  "LET+ form for hash tables.  Each entry is (variable &optional key default).
-Read only version."
+  "LET+ form for hash tables.  Each entry is (variable &optional key default).  Read only version."
   `(let+ ,(expand-entry-forms entries
                               (lambda (key default) `(gethash ,key ,value ,default)))
      ,@body))

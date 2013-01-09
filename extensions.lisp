@@ -3,8 +3,7 @@
 (in-package #:let-plus)
 
 (defun destructured-lambda-list-forms (lambda-list body)
-  "Return (list ARGUMENTS BODY), ie the arguments for the lambda list to be
-destructured and the destructing form, wrapping the original body."
+  "Return (list ARGUMENTS BODY), ie the arguments for the lambda list to be destructured and the destructing form, wrapping the original body."
   (let ((arguments (loop repeat (length lambda-list) collect (gensym))))
     (list arguments
           `(let+ ,(mapcar #'list lambda-list arguments)
@@ -39,8 +38,7 @@ destructured and the destructing form, wrapping the original body."
                                        (r/w (symbolicate #\& name))
                                        (r/o (symbolicate #\& name '#:-r/o)))
                                  &rest slot-names)
-  "Define a LET+ expansion for accessing slots of a structure in a fixed
-order."
+  "Define a LET+ expansion for accessing slots of a structure in a fixed order."
   (let ((variable-name-pairs
          (loop for slot-name in slot-names collect
                ``(,,slot-name ,',slot-name))))
@@ -57,15 +55,14 @@ order."
             ,@body)))))
 
 (define-let+-expansion (&fwrap (name))
-  "Wrap closure in the local function NAME.  Calls to name will call the
-closure"
+  "Wrap closure in the local function NAME.  Calls to NAME will call the closure."
   `(let+ (((&flet ,name (&rest arguments)
              (apply ,value arguments))))
      ,@body))
 
 (define-let+-expansion (&assert (test-form &rest arguments)
                                 :uses-value? nil)
-  "Expand to (assert test-form arguments) before body."
+  "Expand to (ASSERT TEST-FORM ARGUMENTS) before body."
   `(progn
      (assert ,test-form ,@arguments)
      ,@body))

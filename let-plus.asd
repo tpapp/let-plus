@@ -9,7 +9,8 @@
   :components ((:file "package")
                (:file "let-plus")
                (:file "extensions"))
-  :depends-on (#:alexandria #:anaphora))
+  :depends-on (#:alexandria
+               #:anaphora))
 
 (defmethod perform ((op test-op) (sys (eql (find-system '#:let-plus))))
   (operate 'test-op '#:let-plus-tests))
@@ -20,7 +21,8 @@
   :license "Same as LET-PLUS -- this is part of the latter."
   :serial t
   :components ((:file "tests"))
-  :depends-on (#:lift #:let-plus))
+  :depends-on (#:lift
+               #:let-plus))
 
 (defmethod perform ((op test-op) (sys (eql (find-system '#:let-plus-tests))))
   (operate 'load-op '#:let-plus-tests)
