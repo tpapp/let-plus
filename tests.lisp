@@ -178,6 +178,14 @@ should)."
     (ensure-same (foo '((1 2 3) . nil)) '(3 2 1))))
 
 (addtest (let-plus-tests)
+  test-defun+
+  (defun+ foo ((a . b))
+    "bar"
+    (+ a b))
+  (ensure-same (foo '(1 . 2)) 3)
+  (ensure-same (documentation 'foo 'function) "bar" :test #'string=))
+
+(addtest (let-plus-tests)
   test-assert
   (ensure
     (let+ ((a 1)
