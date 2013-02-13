@@ -183,7 +183,19 @@ should)."
     "bar"
     (+ a b))
   (ensure-same (foo '(1 . 2)) 3)
-  (ensure-same (documentation 'foo 'function) "bar" :test #'string=))
+  (ensure-same (documentation 'foo 'function) "bar" :test #'string=)
+  (let ((expansion (macroexpand-1
+                    '(defun+ foo ((a . b))
+                      "foo docstring"
+                      (declare (type integer a b))
+                      (+ a b)))))
+    (ensure-same 'defun (first expansion))
+    (ensure-same 'foo (second expansion))
+    (ensure-same "foo docstring" (fourth expansion))
+    (let ((let+-expansion (fifth expansion)))
+      (ensure-same 'let+ (first let+-expansion))
+      (ensure-same '(declare (type integer a b)) (third let+-expansion))
+      (ensure-same '(+ a b) (fourth let+-expansion)))))
 
 (addtest (let-plus-tests)
   test-assert

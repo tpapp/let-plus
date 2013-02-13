@@ -3,21 +3,26 @@
 (in-package #:let-plus)
 
 (defun destructured-lambda-list-forms (lambda-list body)
-  "Return (list ARGUMENTS BODY), ie the arguments for the lambda list to be destructured and the destructing form, wrapping the original body."
-  (let+ (((&values body &ign documentation)
+  "Return a list that can be spliced into function definitions (eg DEFUN, LAMBDA, FLET, LABELS).
+
+The list starts with a lambda list, and is followed by a docstring (when provided), then a LET+ form that wraps declarations (when provided) and BODY.
+
+Used internally, not exported."
+  (let+ (((&values body declarations documentation)
           (parse-body body :documentation t))
          (arguments (loop repeat (length lambda-list) collect (gensym))))
     `(,arguments
       ,@(when documentation `(,documentation))
       (let+ ,(mapcar #'list lambda-list arguments)
+        ,@declarations
         ,@body))))
 
 (define-let+-expansion (&flet+ (function-name lambda-list
                                               &body function-body)
-                               :uses-value? nil)
+                           :uses-value? nil)
   "&FLET that destructures its arguments using LET+."
   `(let+ (((&flet ,function-name
-              ,@(destructured-lambda-list-forms lambda-list function-body))))
+               ,@(destructured-lambda-list-forms lambda-list function-body))))
      ,@body))
 
 (define-let+-expansion (&labels+ (function-name lambda-list
@@ -25,7 +30,7 @@
                                :uses-value? nil)
   "&LABELS that destructures its arguments using LET+."
   `(let+ (((&labels ,function-name
-             ,@(destructured-lambda-list-forms lambda-list function-body))))
+               ,@(destructured-lambda-list-forms lambda-list function-body))))
      ,@body))
 
 (defmacro lambda+ (lambda-list &body body)
