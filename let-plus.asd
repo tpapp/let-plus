@@ -4,7 +4,7 @@
   :description "Destructuring extension of LET*."
   :author "Tamas K. Papp <tkpapp@gmail.com>."
   :license "Boost Software License - Version 1.0"
-  :version "0.1"
+  :version "0.2"
   :serial t
   :components ((:file "package")
                (:file "let-plus")
