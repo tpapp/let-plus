@@ -32,8 +32,6 @@
    #:defun+
    #:define-structure-let+
    #:&fwrap
-   #:&assert
-   #:&do
    #:&once-only
    #:&with-gensyms
    #:&complex))

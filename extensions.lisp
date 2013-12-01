@@ -68,19 +68,6 @@ Used internally, not exported."
              (apply ,value arguments))))
      ,@body))
 
-(define-let+-expansion (&assert (test-form &rest arguments)
-                                :uses-value? nil)
-  "Expand to (ASSERT TEST-FORM ARGUMENTS) before body."
-  `(progn
-     (assert ,test-form ,@arguments)
-     ,@body))
-
-(define-let+-expansion (&do forms :uses-value? nil)
-  "Execute FORMS below before body.  Has no value."
-  `(progn
-     ,@forms
-     ,@body))
-
 (define-let+-expansion (&once-only specs :uses-value? nil)
   "Expand to (ONCE-ONLY SPECS ...)."
   `(once-only ,specs ,@body))
