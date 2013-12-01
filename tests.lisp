@@ -198,18 +198,6 @@ should)."
       (ensure-same '(+ a b) (fourth let+-expansion)))))
 
 (addtest (let-plus-tests)
-  test-assert
-  (ensure
-    (let+ ((a 1)
-           (b 1)
-           ((&assert (= a b))))
-      t))
-  (ensure-error
-    (let+ ((a 1)
-           (b 2)
-           ((&assert (= a b)))))))
-
-(addtest (let-plus-tests)
   test-&warning
   (ensure-warning
     (macroexpand '(let+ ((&foo 1)) &foo)))
