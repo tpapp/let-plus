@@ -10,10 +10,17 @@ The list starts with a lambda list, and is followed by a docstring (when provide
 Used internally, not exported."
   (let+ (((&values body declarations documentation)
           (parse-body body :documentation t))
-         (arguments (loop repeat (length lambda-list) collect (gensym))))
+         ((&values arguments bindings ignores)
+          (loop :for parameter :in lambda-list
+             :for argument = (gensym)
+             :collect argument :into arguments
+             :if (eq parameter '&ign) :collect argument :into ignores
+             :else :collect (list parameter argument) :into bindings
+             :finally (return (values arguments bindings ignores)))))
     `(,arguments
       ,@(when documentation `(,documentation))
-      (let+ ,(mapcar #'list lambda-list arguments)
+      ,@(when ignores `((declare (ignore ,@ignores))))
+      (let+ ,bindings
         ,@declarations
         ,@body))))
 
