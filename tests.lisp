@@ -175,7 +175,11 @@ should)."
             (if a
                 (foo (cons (cdr a) (cons (car a) b)))
                 b))))
-    (ensure-same (foo '((1 2 3) . nil)) '(3 2 1))))
+    (ensure-same (foo '((1 2 3) . nil)) '(3 2 1)))
+
+  (ensure-no-warning
+    (compile nil '(lambda (x)
+                    (let+ (((&labels+ foo (&ign)))) (foo x))))))
 
 (addtest (let-plus-tests)
   test-defun+
