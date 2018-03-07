@@ -1,6 +1,8 @@
 #+TITLE: =let+=: destructuring extension of =let*=
 #+AUTHOR: Tamás K. Papp
 
+*IMPORTANT* This library is [[https://tpapp.github.io/post/orphaned-lisp-libraries/][unmaintained]].
+
 This library implements the =let+= macro, which is a dectructuring
 extension of =let*=.
 
@@ -58,8 +60,8 @@ The following forms are defined:
 #+BEGIN_SRC lisp
 (let+ (((a (b &optional (c 3)) &ign &key (d 1 d?)) '(1 (2) 7 :d 4)))
   (list a b c d d?))  ; => (1 2 3 4 T)
-#+END_SRC                    
-     
+#+END_SRC
+
 - =((&slots slot*) value)=, also =&slots-r/o= :: Similarly to =with-slots=, each =slot= has the syntax =variable= or =(variable)= (for these, the variable name is also used for the slot name) or =(variable slot-name)=.  =&slots-r/o= provides read-only bindings.
 
      Example:
@@ -83,7 +85,7 @@ The following forms are defined:
 (defstruct foo-struct c d)
 (let+ (((&structure foo-struct- c (my-d d)) (make-foo-struct :c 3 :d 4)))
   (list c my-d))  ; => (3 4)
-#+END_SRC  
+#+END_SRC
 
 - =((&values value*) form)= :: Similar to =multiple-value-bind=.  =&ign= are ignored.  Example:
 #+BEGIN_SRC lisp
@@ -121,7 +123,7 @@ The following forms are defined:
 #+BEGIN_SRC lisp
 (let+ (((&plist a (my-b b) (c nil 3)) '(a 1 b 2)))
   (list a my-b c))  ; => (1 2 3)
-#+END_SRC     
+#+END_SRC
 
 - =(((&hash-table (variable key [default])*)=, also =&hash-table-r/o= :: Access to the elements of hash tables, the semantics is the same as =&plist=.
 
@@ -129,7 +131,7 @@ The following forms are defined:
 
 ** Nesting
 
-You can nest =let+= expressions when it makes sense (it doesn't always, especially for read/write slots, the read only form should work).  For example, 
+You can nest =let+= expressions when it makes sense (it doesn't always, especially for read/write slots, the read only form should work).  For example,
 #+BEGIN_SRC lisp
 (let+ ((#((&complex a b)) (vector (complex 1 2))))
   (list a b))
